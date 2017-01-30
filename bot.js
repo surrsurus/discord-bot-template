@@ -33,9 +33,8 @@ if (log_to_file) {
 
 /* --- Content Pairs --- */
 
-// Data.json
-var rawData = fs.readFileSync("data.json");
-var jsonData = JSON.parse(rawData);
+// get data from data.json
+var jsonData = JSON.parse(fs.readFileSync("data.json"));
 
 // Dict of trigger : response pairs
 // This can be anything, from specific text, to video links, to emojis, to whatever.
@@ -71,7 +70,7 @@ client.on('ready', () => {
 
     // Load the content pairs
     console.log('[*] Loading content pairs...');
-    // Load data into content pairs
+    // Load data into content pairs from jsonData
     for(var attribute in jsonData){
         contentPairs[attribute] = jsonData[attribute];
     }
