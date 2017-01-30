@@ -7,6 +7,8 @@ const fs = require('fs');
 const util = require('util');
 const date = new Date();
 
+// NOTE: Feel free to edit or change most of the const values to your needs.
+
 /* --- Token --- */
 
 // Super secret token!
@@ -15,7 +17,17 @@ const token = "token goes here";
 /* --- Logging --- */
 
 // Disable logging to a file here
-const log_to_file = false;
+const log_to_file = true;
+
+// Create log file
+var log_file;
+
+if (log_to_file) {
+    var datetime = "-" + (date.getMonth() + 1) + "-" + date.getDate() + "-" + date.getHours() + "-" + date.getMinutes() + "-" + date.getSeconds();
+    log_file = fs.createWriteStream(__dirname + '/log' +  datetime + '.log', {flags : 'w'});
+} else {
+    console.log("[!] No logging to file!");
+}
 
 // Override log to also write to file
 console.log = function(msg) {
@@ -23,23 +35,33 @@ console.log = function(msg) {
   process.stdout.write(util.format(msg) + '\n');
 };
 
-// Create log file
-if (log_to_file) {
-    const datetime = "-" + (date.getMonth() + 1) + "-" + date.getDate() + "-" + date.getHours() + "-" + date.getMinutes() + "-" + date.getSeconds();
-    const log_file = fs.createWriteStream(__dirname + '/log' +  datetime + '.log', {flags : 'w'});
-} else {
-    console.log("[!] No logging to file!");
-}
-
 /* --- Content Pairs --- */
 
-// get data from data.json
-var jsonData = JSON.parse(fs.readFileSync("data.json"));
+// Initialize data
+var copypastaData;
+var tyroneData;
 
 // Dict of trigger : response pairs
 // This can be anything, from specific text, to video links, to emojis, to whatever.
-// These are loaded in from data.json
+// This is loaded in from data.json
 var contentPairs = {};
+
+// Load data from json and apply it
+function loadContentPairs() {
+    /// Read
+    // get copypasta data from copypasta.json
+    contentData = JSON.parse(fs.readFileSync("copypasta.json"));
+
+    /// Parse
+    // Load the copypasta pairs
+    console.log('[*] Loading copypasta pairs...');
+    // Load data into content pairs from jsonData
+    for(var attribute in contentData){
+        contentPairs[attribute] = contentData[attribute];
+    }
+
+}
+
 
 /* --- Help message setup --- */
 
@@ -50,7 +72,7 @@ const responseLen = 40;
 var helpMsg = "";
 
 // This is the command the user must enter to get the help message from the bot
-var helpCommand = "!bot.help";
+const helpCommand = "!bot.help";
 
 /* --- Ready up --- */
 
@@ -60,19 +82,15 @@ var helpCommand = "!bot.help";
 // from Discord _after_ ready is emitted.
 client.on('ready', () => {
 
+    // Load data from json
+    loadContentPairs();
+
     // Load the help message
     // This creates a specfic message to send to users who request to see the
     // bot features.
     console.log('[*] Loading help...');
     for (var key in contentPairs) {
         helpMsg += (key + " => " + contentPairs[key].substring(0, responseLen) + "...\n")
-    }
-
-    // Load the content pairs
-    console.log('[*] Loading content pairs...');
-    // Load data into content pairs from jsonData
-    for(var attribute in jsonData){
-        contentPairs[attribute] = jsonData[attribute];
     }
 
     // Set the bot's status. Can be anything, but it is a user friendly
@@ -114,6 +132,7 @@ client.on('message', message => {
 
         // Alterative methods may be used as well
         // for example, if a message is just 'RMS' it'll respond with the GNU/Linux interjection
+        // It is recommended to just make two entries in data.json instead, if you really need it
         if (message.content === "RMS") {
             console.log("[!] Alternative message found!")
             // As you can see, we can just send out contentPairs with a key to get the message
